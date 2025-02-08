@@ -11,13 +11,13 @@
     and try to find something like this "raspberrypi-exp-gpio"
 
     To use this driver we need to make and build this file using this cmd
-    "make"
+        "make"
     to check the kernel msg we will use this cmd in another terminal
-    "sudo dmesg -W" or dmsg 
+        "sudo dmesg -WT" or dmsg 
     to insert this driver we will use this cmd
-    "sudo insmod gpio_ctrl.ko"
+        "sudo insmod gpio_ctrl.ko"
     and to remove this driver we wil use this cmd
-    "sudo rmmod gpio_ctrl"
+        "sudo rmmod gpio_ctrl"
 */
 
 #include <linux/modules.h>
@@ -36,37 +36,38 @@ static int __init my_init(void){
 
     led = gpio_to_desc(LED_PIN + ADDRESS_OFFSET);
     if(!led){
-        printk("Error getting pin 21\n");
+        printk(KERN_ERR "Error getting pin 21\n");
         return -ENODEV;
     }
 
     button = gpio_to_desc(BUTTON_PIN + ADDRESS_OFFSET);
     if(!button){
-        printk("Error getting pin 20\n");
+        printk(KERN_ERR "Error getting pin 20\n");
         return -ENODEV;
     }
 
     status = gpiod_direction_output(led, 0);
     if(status){
-        printk("Error setting pin 20 to input\n");
+        printk(KERN_ERR "Error setting pin 20 to input\n");
         return status;
     }
 
     status = gpio_direction_input(button);
     if(status){
-        printk("Error setting pin 21 to input");
+        printk(KERN_ERR "Error setting pin 21 to input");
         return status;
     }
 
     gpio_set_value(led, 1);
 
-    printk("Button is %spressed\n", gpio_get_value(button) ? "" : "not ");
+    printk(KERN_INFO "Button is %spressed\n", gpio_get_value(button) ? "" : "not ");
 
     return 0;
 }
 
 static __exit my_exit(void){
     gpiod_set_value(led, 0);
+    pr_info("Removing the gpio ctrl module\n");
 }
 
 module_init(my_init);
