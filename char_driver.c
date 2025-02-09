@@ -13,15 +13,20 @@
         To read from the device file
             "sudo cat /dev/char_driver_file"
 
+        To open, write and other related functions we will need a 
+        normal user file (test.c).
+            compile this test.c file "gcc test.c -o char_test"
+            sudo ./char_test /dev/char_driver_file
+
 
     To use this driver we need to make and build this file using this cmd
         "make"
     to check the kernel msg we will use this cmd in another terminal
         "sudo dmesg -WT" or dmsg 
     to insert this driver we will use this cmd
-        "sudo insmod gpio_ctrl.ko"
+        "sudo insmod char_driver.ko"
     and to remove this driver we wil use this cmd
-        "sudo rmmod gpio_ctrl"
+        "sudo rmmod char_driver"
 */
 
 #include <linux/module.h>
@@ -35,10 +40,22 @@ static int __init my_init(void){
     major = register_chrdev(0, "char_driver", &fops);
     if(major<0){
         printk(KERN_ERR "Error registering chrdev\n");
+        // pr_err("Error registering chrdev\n");
         return major;
     }
 
     printk(KERN_INFO "Major device number: %d\n", major);
+    // pr_info(KERN_INFO "Major device number: %d\n", major);
+    return 0;
+}
+
+static int my_open(struct inode *inode, struct file *filp){
+    pr_info("Major: %d, Minor: %d\n", imajor(inode), iminor(inode));
+
+    pr_info("filp->f_pos: %lld\n", filp->f_pos);
+    pr_info("filp->f_mode: 0x%x\n", filp->f_mode);
+    pr_infor("filp->f_flags: 0x%x\n", filp->f_flags);
+
     return 0;
 }
 
@@ -47,8 +64,15 @@ static ssize_t my_read(struct file *f, char __user *u, size_t l, loff_t *o){
     return 0;
 }
 
+static int my_release(struct inode *inode, struct file *filp){
+    pr_info("File is closed\n");
+    return 0;
+}
+
 static struct file_operations fops = {
-    .read = my_read
+    .read = my_read,
+    .open = my_open,
+    .release = my_release
 }
 
 static void __exit my_exit(void){
