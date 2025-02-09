@@ -34,45 +34,47 @@
 #include <linux/fs.h>
 
 static int major;
-static struct file_operations fops = {};
+
+// Function prototypes
+static int my_open(struct inode *inode, struct file *filp);
+static ssize_t my_read(struct file *f, char __user *u, size_t l, loff_t *o);
+static int my_release(struct inode *inode, struct file *filp);
+
+// File operations structure
+static struct file_operations fops = {
+    .read = my_read,
+    .open = my_open,
+    .release = my_release
+};
 
 static int __init my_init(void){
     major = register_chrdev(0, "char_driver", &fops);
-    if(major<0){
-        printk(KERN_ERR "Error registering chrdev\n");
-        // pr_err("Error registering chrdev\n");
+    if (major < 0) {
+        pr_err("Error registering chrdev\n");
         return major;
     }
 
-    printk(KERN_INFO "Major device number: %d\n", major);
-    // pr_info(KERN_INFO "Major device number: %d\n", major);
+    pr_info("Major device number: %d\n", major);
     return 0;
 }
 
 static int my_open(struct inode *inode, struct file *filp){
     pr_info("Major: %d, Minor: %d\n", imajor(inode), iminor(inode));
-
     pr_info("filp->f_pos: %lld\n", filp->f_pos);
     pr_info("filp->f_mode: 0x%x\n", filp->f_mode);
-    pr_infor("filp->f_flags: 0x%x\n", filp->f_flags);
+    pr_info("filp->f_flags: 0x%x\n", filp->f_flags);
 
     return 0;
 }
 
 static ssize_t my_read(struct file *f, char __user *u, size_t l, loff_t *o){
-    printk(KERN_INFO "Read is called");
+    pr_info("Read is called\n");
     return 0;
 }
 
 static int my_release(struct inode *inode, struct file *filp){
     pr_info("File is closed\n");
     return 0;
-}
-
-static struct file_operations fops = {
-    .read = my_read,
-    .open = my_open,
-    .release = my_release
 }
 
 static void __exit my_exit(void){
@@ -84,5 +86,4 @@ module_init(my_init);
 module_exit(my_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_LICENSE("Shivam Shah");
 MODULE_DESCRIPTION("A normal character driver");
